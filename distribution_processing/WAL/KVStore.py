@@ -8,6 +8,7 @@ class KVStore:
     def __init__(self, wal: WAL):
         self.kv: Dict[str, Any] = {}
         self.wal = wal
+        self.recover_from_wal()
 
     def get(self, key: str) -> Optional[Any]:
         return self.kv.get(key)
@@ -18,4 +19,9 @@ class KVStore:
 
     def append_log(self, key: str, value: Any) -> int:
         cmd = SetValueCommand(key, value)
-        return self.wal.writeEntry(cmd.serialize())
+        return self.wal.write_entry(cmd.serialize())
+
+    def recover_from_wal(self) -> None:
+        for entry in self.wal.entries:
+            cmd = SetValueCommand.deserialize(entry.commandData)
+            self.kv[cmd.key] = cmd.value

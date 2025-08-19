@@ -1,18 +1,26 @@
+import os
+
 from distribution_processing.WAL.KVStore import KVStore
-from distribution_processing.WAL.SetValueCommand import SetValueCommand
 from distribution_processing.WAL.WAL import WAL
 
-wal = WAL()
+# ---  데이터 테스트 ---
+wal_file = 'wal.log'
+
+if os.path.exists(wal_file):
+    os.remove(wal_file)
+
+wal = WAL(wal_file)
 store = KVStore(wal)
 
-store.set("name", "Alice")
-store.set("age", 30)
+for i in range(2000):
+    store.set(f"key{i}", f"value{i}")
 
-print(store.get("name"))  # Alice
-print(store.get("age"))   # 30
+print("KVStore size:", len(store.kv))
 
-print("WAL Entries:")
+# --- 재시작 후 복구 테스트 ---
+wal2 = WAL(wal_file)
+store2 = KVStore(wal2)
+print("Recovered KVStore size:", len(store2.kv))
 
-for entry in wal.entries:
-    cmd = SetValueCommand.deserialize(entry.commandData)
-    print(entry.entryIndex, cmd.key, cmd.value, entry.timestamp)
+print(store2.get("key0"))
+print(store2.get("key1999"))
