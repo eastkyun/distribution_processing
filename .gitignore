@@ -4,4 +4,4 @@
 .idea
 __pycache__
 
-wal.log
+wal*.log
